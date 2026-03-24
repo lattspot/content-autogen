@@ -1,0 +1,757 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>R-Content AutoGen — 콘텐츠 자동 생성기</title>
+<link href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@400;500;700&family=DM+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+:root {
+  --navy: #0F2044; --navyMid: #1A3260; --blue: #2563EB;
+  --bluePale: #D6E4F7; --blueFaint: #EBF2FC;
+  --white: #FFFFFF; --offWhite: #F7F9FC;
+  --gray100: #F1F5F9; --gray200: #E2E8F0;
+  --gray400: #94A3B8; --gray600: #475569; --gray800: #1E293B;
+  --border: rgba(15,32,68,0.1); --shadow: 0 4px 20px rgba(15,32,68,0.08);
+  --green: #059669; --greenPale: #ECFDF5;
+  --linkedin: #0A66C2; --linkedinPale: #E8F0FB;
+}
+body { font-family: 'Noto Sans KR', sans-serif; background: var(--offWhite); color: var(--gray800); min-height: 100vh; }
+
+
+
+.header {
+  background: var(--navy); padding: 0 2rem; height: 58px;
+  display: flex; align-items: center; justify-content: space-between;
+  position: sticky; top: 0; z-index: 100;
+  box-shadow: 0 2px 8px rgba(15,32,68,0.2);
+}
+.logo { display: flex; align-items: center; gap: 10px; font-size: 15px; font-weight: 700; color: var(--white); letter-spacing: 0.06em; }
+.logo-mark { width: 28px; height: 28px; border-radius: 7px; background: var(--blue); display: flex; align-items: center; justify-content: center; font-size: 14px; font-weight: 900; color: var(--white); }
+.header-badge { font-size: 11px; padding: 4px 12px; border-radius: 20px; background: rgba(37,99,235,0.2); color: #93B3D8; border: 1px solid rgba(37,99,235,0.3); }
+
+.container { max-width: 1200px; margin: 0 auto; padding: 2rem 1.5rem; display: grid; grid-template-columns: 380px 1fr; gap: 1.5rem; align-items: start; }
+
+.panel { background: var(--white); border: 1px solid var(--border); border-radius: 14px; box-shadow: var(--shadow); overflow: hidden; }
+.panel-header { padding: 1rem 1.25rem 0.75rem; border-bottom: 1px solid var(--border); display: flex; align-items: center; gap: 8px; }
+.panel-header h2 { font-size: 14px; font-weight: 700; color: var(--navy); }
+.panel-icon { width: 28px; height: 28px; border-radius: 8px; background: var(--blueFaint); display: flex; align-items: center; justify-content: center; font-size: 14px; }
+.panel-body { padding: 1.25rem; }
+
+.field { margin-bottom: 1.1rem; }
+.field label { display: block; font-size: 11px; font-weight: 700; color: var(--gray400); text-transform: uppercase; letter-spacing: 0.08em; margin-bottom: 6px; }
+
+.chip-group { display: flex; flex-wrap: wrap; gap: 6px; }
+.chip { padding: 6px 13px; border-radius: 20px; border: 1px solid var(--gray200); background: var(--white); color: var(--gray600); font-size: 12px; font-weight: 500; cursor: pointer; transition: all 0.15s; font-family: 'Noto Sans KR', sans-serif; }
+.chip:hover { border-color: var(--blue); color: var(--blue); }
+.chip.active { background: var(--navy); color: var(--white); border-color: var(--navy); }
+.chip.ch-linkedin.active { background: var(--linkedin); border-color: var(--linkedin); }
+.chip.ch-blog.active { background: var(--green); border-color: var(--green); }
+.chip.ch-both.active { background: var(--navy); border-color: var(--navy); }
+
+.input-field { width: 100%; padding: 9px 12px; border: 1px solid var(--gray200); border-radius: 9px; font-size: 13px; font-family: 'Noto Sans KR', sans-serif; color: var(--gray800); background: var(--offWhite); outline: none; transition: border-color 0.15s, background 0.15s; }
+.input-field:focus { border-color: var(--blue); background: var(--white); box-shadow: 0 0 0 3px rgba(37,99,235,0.08); }
+.input-field::placeholder { color: var(--gray400); }
+.input-field.error { border-color: #DC2626; }
+
+.textarea-field { width: 100%; padding: 9px 12px; border: 1px solid var(--gray200); border-radius: 9px; font-size: 12px; font-family: 'Noto Sans KR', sans-serif; color: var(--gray800); background: var(--offWhite); outline: none; resize: vertical; min-height: 72px; transition: border-color 0.15s; line-height: 1.6; }
+.textarea-field:focus { border-color: var(--blue); background: var(--white); box-shadow: 0 0 0 3px rgba(37,99,235,0.08); }
+.textarea-field::placeholder { color: var(--gray400); }
+.char-count { font-size: 10px; color: var(--gray400); text-align: right; margin-top: 3px; }
+
+.gen-btn { width: 100%; padding: 13px; border-radius: 10px; background: var(--blue); color: var(--white); font-size: 14px; font-weight: 700; border: none; cursor: pointer; font-family: 'Noto Sans KR', sans-serif; transition: all 0.15s; display: flex; align-items: center; justify-content: center; gap: 8px; margin-top: 0.25rem; }
+.gen-btn:hover { background: #1D4ED8; transform: translateY(-1px); box-shadow: 0 4px 12px rgba(37,99,235,0.3); }
+.gen-btn:active { transform: scale(0.98); }
+.gen-btn:disabled { background: var(--gray200); color: var(--gray400); cursor: not-allowed; transform: none; box-shadow: none; }
+
+@keyframes spin { to { transform: rotate(360deg); } }
+.spinner { width: 16px; height: 16px; border: 2px solid rgba(255,255,255,0.3); border-top-color: white; border-radius: 50%; animation: spin 0.7s linear infinite; }
+
+.result-panel { position: sticky; top: 74px; }
+
+.empty-state { padding: 4rem 2rem; display: flex; flex-direction: column; align-items: center; gap: 12px; text-align: center; }
+.empty-icon { font-size: 48px; opacity: 0.2; }
+.empty-title { font-size: 15px; font-weight: 600; color: var(--gray400); }
+.empty-sub { font-size: 13px; color: var(--gray400); line-height: 1.7; }
+
+.result-tabs { display: flex; border-bottom: 1px solid var(--border); padding: 0 1rem; }
+.result-tab { padding: 12px 16px; font-size: 13px; font-weight: 500; color: var(--gray400); cursor: pointer; border-bottom: 2px solid transparent; transition: all 0.15s; display: flex; align-items: center; gap: 6px; user-select: none; }
+.result-tab:hover { color: var(--gray800); }
+.result-tab.active { color: var(--navy); border-bottom-color: var(--blue); font-weight: 700; }
+
+.result-content { display: none; padding: 1.25rem; }
+.result-content.active { display: block; }
+
+.result-card { border: 1px solid var(--border); border-radius: 10px; overflow: hidden; margin-bottom: 1rem; }
+.result-card-header { padding: 10px 14px; display: flex; align-items: center; justify-content: space-between; border-bottom: 1px solid var(--border); background: var(--offWhite); }
+.result-card-title { display: flex; align-items: center; gap: 8px; font-size: 12px; font-weight: 700; }
+.linkedin-badge { padding: 3px 10px; border-radius: 20px; background: var(--linkedinPale); color: var(--linkedin); font-size: 11px; font-weight: 700; }
+.blog-badge { padding: 3px 10px; border-radius: 20px; background: var(--greenPale); color: var(--green); font-size: 11px; font-weight: 700; }
+.copy-btn { padding: 4px 12px; border-radius: 6px; border: 1px solid var(--gray200); background: var(--white); font-size: 11px; font-weight: 500; color: var(--gray600); cursor: pointer; font-family: 'Noto Sans KR', sans-serif; transition: all 0.15s; }
+.copy-btn:hover { background: var(--blueFaint); border-color: var(--blue); color: var(--blue); }
+.copy-btn.copied { background: var(--greenPale); border-color: var(--green); color: var(--green); }
+
+.result-body { padding: 16px; font-size: 13px; line-height: 1.9; color: var(--gray800); white-space: pre-wrap; background: var(--white); max-height: 420px; overflow-y: auto; }
+
+.meta-row { display: flex; gap: 8px; flex-wrap: wrap; margin-bottom: 1rem; }
+.meta-chip { padding: 3px 10px; border-radius: 20px; font-size: 11px; font-weight: 500; background: var(--blueFaint); color: var(--blue); border: 1px solid var(--bluePale); }
+
+@keyframes shimmer { 0% { background-position: -400px 0; } 100% { background-position: 400px 0; } }
+.skeleton { border-radius: 6px; background: linear-gradient(90deg, var(--gray100) 25%, var(--gray200) 50%, var(--gray100) 75%); background-size: 800px 100%; animation: shimmer 1.5s infinite; margin-bottom: 10px; }
+
+@keyframes fadeIn { from { opacity: 0; transform: translateY(8px); } to { opacity: 1; transform: none; } }
+.fade-in { animation: fadeIn 0.4s ease both; }
+
+.history-item { padding: 10px 12px; border: 1px solid var(--border); border-radius: 8px; margin-bottom: 8px; cursor: pointer; transition: all 0.15s; display: flex; align-items: center; justify-content: space-between; }
+.history-item:hover { border-color: var(--blue); background: var(--blueFaint); }
+.history-kw { font-size: 13px; font-weight: 600; color: var(--navy); }
+.history-meta { font-size: 11px; color: var(--gray400); margin-top: 2px; }
+.history-time { font-size: 11px; color: var(--gray400); flex-shrink: 0; }
+
+.result-footer { font-size: 11px; color: var(--gray400); text-align: right; margin-top: 6px; padding: 0 2px; }
+
+@media (max-width: 900px) { .container { grid-template-columns: 1fr; } .result-panel { position: static; } }
+</style>
+</head>
+<body>
+
+<header class="header">
+  <div class="logo">
+    <div class="logo-mark">R</div>
+    R-Content AutoGen
+  </div>
+  <span class="header-badge">Powered by Claude AI</span>
+</header>
+
+<div class="container">
+
+  <!-- 왼쪽 입력 패널 -->
+  <div>
+    <div class="panel">
+      <div class="panel-header">
+        <div class="panel-icon">⚙️</div>
+        <h2>콘텐츠 설정</h2>
+      </div>
+      <div class="panel-body">
+
+        <div class="field">
+          <label>콘텐츠 유형</label>
+          <div class="chip-group" id="typeGroup">
+            <button class="chip active" data-val="고객 사례">📋 고객 사례</button>
+            <button class="chip" data-val="산업 트렌드">📈 산업 트렌드</button>
+            <button class="chip" data-val="제품 기능">🛠 제품 기능</button>
+            <button class="chip" data-val="이벤트 홍보">🎯 이벤트 홍보</button>
+            <button class="chip" data-val="뉴스 코멘트">📰 뉴스 코멘트</button>
+          </div>
+        </div>
+
+        <div class="field">
+          <label>핵심 키워드</label>
+          <input class="input-field" id="keyword" placeholder="예: 원격지원, 화상회의, 보안" maxlength="100" oninput="updateCharCount(this,'kwCount')"/>
+          <div class="char-count" id="kwCount">0 / 100</div>
+        </div>
+
+        <div class="field">
+          <label>추가 맥락 (선택)</label>
+          <textarea class="textarea-field" id="context" placeholder="예: 최근 공공기관 원격지원 계약 체결, 보안 강화 기능 추가..." maxlength="300" oninput="updateCharCount(this,'ctxCount')"></textarea>
+          <div class="char-count" id="ctxCount">0 / 300</div>
+        </div>
+
+        <div class="field">
+          <label>톤 (Tone)</label>
+          <div class="chip-group" id="toneGroup">
+            <button class="chip active" data-val="전문가적">🎩 전문가적</button>
+            <button class="chip" data-val="친근하고 공감가는">😊 친근한</button>
+            <button class="chip" data-val="기술 중심적">💻 기술중심</button>
+            <button class="chip" data-val="스토리텔링">📖 스토리</button>
+          </div>
+        </div>
+
+        <div class="field">
+          <label>출력 채널</label>
+          <div class="chip-group" id="channelGroup">
+            <button class="chip ch-linkedin active" data-val="linkedin">💼 LinkedIn</button>
+            <button class="chip ch-blog" data-val="blog">✍️ 블로그</button>
+            <button class="chip ch-both" data-val="both">✨ 둘 다</button>
+          </div>
+        </div>
+
+        <div class="field">
+          <label>타겟 독자</label>
+          <div class="chip-group" id="targetGroup">
+            <button class="chip active" data-val="IT 담당자">IT 담당자</button>
+            <button class="chip" data-val="C레벨 임원">C레벨</button>
+            <button class="chip" data-val="중소기업 대표">SMB 대표</button>
+            <button class="chip" data-val="일반 직장인">일반 직장인</button>
+          </div>
+        </div>
+
+        <button class="gen-btn" id="genBtn" onclick="generateContent()">
+          <span>✨</span>
+          <span id="btnText">콘텐츠 자동 생성</span>
+        </button>
+
+      </div>
+    </div>
+
+    <!-- 생성 이력 -->
+    <div class="panel" style="margin-top:1rem;">
+      <div class="panel-header">
+        <div class="panel-icon">🕐</div>
+        <h2>최근 생성 이력</h2>
+      </div>
+      <div class="panel-body" id="historyList">
+        <div style="text-align:center;padding:1rem;font-size:12px;color:var(--gray400)">생성된 이력이 없습니다</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- 오른쪽 결과 패널 -->
+  <div class="panel result-panel">
+    <div id="emptyState" class="empty-state">
+      <div class="empty-icon">✨</div>
+      <div class="empty-title">콘텐츠를 생성해 보세요</div>
+      <div class="empty-sub">키워드와 설정을 입력하고<br>자동 생성 버튼을 누르면<br>LinkedIn 포스트와 블로그 글을<br>Claude AI가 즉시 만들어 드립니다.</div>
+    </div>
+
+    <div id="loadingState" style="display:none;padding:1.5rem;">
+      <div style="display:flex;align-items:center;gap:10px;margin-bottom:1.25rem;">
+        <div class="spinner" style="border-color:rgba(37,99,235,0.2);border-top-color:var(--blue);"></div>
+        <span style="font-size:13px;color:var(--blue);font-weight:600;" id="loadingMsg">Claude AI가 콘텐츠를 구성하는 중...</span>
+      </div>
+      <div class="skeleton" style="height:18px;width:75%;"></div>
+      <div class="skeleton" style="height:18px;width:92%;"></div>
+      <div class="skeleton" style="height:18px;width:58%;"></div>
+      <div class="skeleton" style="height:18px;width:85%;margin-top:14px;"></div>
+      <div class="skeleton" style="height:18px;width:78%;"></div>
+      <div class="skeleton" style="height:18px;width:93%;"></div>
+      <div class="skeleton" style="height:18px;width:62%;"></div>
+      <div class="skeleton" style="height:18px;width:80%;margin-top:14px;"></div>
+      <div class="skeleton" style="height:18px;width:70%;"></div>
+    </div>
+
+    <div id="resultState" style="display:none;">
+      <div class="result-tabs" id="resultTabs"></div>
+      <div id="resultContents"></div>
+    </div>
+  </div>
+</div>
+
+<script>
+// ── 예시 콘텐츠 데이터베이스 ─────────────────────
+const DEMO_CONTENT = {
+  "고객 사례": {
+    linkedin: `🏢 공공기관의 원격지원, 이렇게 바뀌었습니다.
+
+A 지방자치단체 IT팀은 매일 반복되는 문제로 고민이었습니다.
+전국 200개 지사 직원들의 PC 장애 처리에 평균 4시간이 소요됐고, 출장 비용만 연간 1억 원이 넘었습니다.
+
+알서포트 RemoteView 도입 후 달라진 것들:
+
+✅ 장애 처리 시간: 4시간 → 평균 23분
+✅ 출장 비용: 연 1억 원 → 거의 제로
+✅ 직원 만족도: 도입 6개월 만에 32% 상승
+✅ 보안 인증: CC인증·ISMS 완벽 충족
+
+IT 담당자 K 과장의 한마디:
+"처음엔 반신반의했는데, 이제는 RemoteView 없이 업무를 어떻게 했나 싶습니다."
+
+원격지원은 단순한 도구가 아닙니다.
+업무 방식 자체를 바꾸는 인프라입니다.
+
+여러분의 조직은 어떤 IT 지원 방식을 사용하고 계신가요? 💬
+
+#원격지원 #RemoteView #알서포트 #디지털전환 #공공IT #업무효율화`,
+
+    blog: `# 공공기관 원격지원 도입 사례: A 지자체의 IT 혁신 스토리
+
+## 도입 배경: 반복되는 비효율의 악순환
+
+전국 200개 지사를 운영하는 A 지방자치단체 IT팀은 만성적인 문제에 시달리고 있었습니다. 직원 PC 장애가 발생할 때마다 IT 담당자가 직접 현장을 방문해야 했고, 이로 인한 평균 처리 시간은 4시간에 달했습니다. 연간 출장 비용은 1억 원을 훌쩍 넘었고, IT 인력은 이동 시간에만 하루의 절반을 쏟아붓고 있었습니다.
+
+문제는 비용만이 아니었습니다. 장애 처리가 늦어질수록 업무 공백이 생기고, 직원들의 불만은 쌓여만 갔습니다.
+
+## 해결책: 알서포트 RemoteView 도입
+
+2023년 초, A 지자체는 알서포트의 RemoteView를 전사 도입하기로 결정했습니다. 선택 기준은 세 가지였습니다.
+
+**첫째, 보안성.** 공공기관 특성상 CC인증과 ISMS 인증이 필수였습니다. RemoteView는 국내 원격지원 솔루션 중 가장 많은 보안 인증을 보유하고 있었습니다.
+
+**둘째, 사용 편의성.** IT에 익숙하지 않은 지방 지사 직원들도 쉽게 연결 요청을 보낼 수 있어야 했습니다.
+
+**셋째, 안정성.** 하루에도 수십 건의 동시 접속이 발생하는 환경에서 끊김 없는 서비스가 필요했습니다.
+
+## 도입 6개월 후: 숫자로 보는 변화
+
+도입 후 6개월이 지났을 때, 결과는 놀라웠습니다.
+
+- **장애 처리 시간**: 평균 4시간 → 23분 (94% 단축)
+- **연간 출장 비용**: 1억 2천만 원 → 약 200만 원
+- **IT 담당자 이동 시간**: 하루 평균 3.5시간 → 0.3시간
+- **직원 만족도 점수**: 6개월 만에 32% 상승
+
+## IT 담당자가 전하는 솔직한 후기
+
+담당 K 과장은 이렇게 말합니다.
+
+"처음에는 '원격으로 정말 다 해결이 될까?' 반신반의했습니다. 특히 나이 드신 직원분들이 연결 방법을 어려워하실 것 같았는데, 링크 하나 보내드리면 클릭만으로 연결되니까 오히려 현장에서 더 좋아하시더라고요. 이제는 RemoteView 없이 어떻게 일했나 싶습니다."
+
+## 시작하려는 조직을 위한 조언
+
+원격지원 시스템 도입을 고민하는 기관이라면 먼저 **파일럿 운영**을 권장합니다. 알서포트는 30일 무료 체험을 제공하며, 도입 전 전담 컨설팅도 지원합니다. 조직 규모와 업무 환경에 맞는 맞춤 설정으로 빠르게 효과를 체감할 수 있습니다.
+
+원격지원은 더 이상 선택이 아닌 필수 인프라입니다. 여러분의 조직도 변화를 시작해 보세요.
+
+---
+*알서포트 RemoteView 도입 문의: www.rsupport.com | 1588-0800*`
+  },
+
+  "산업 트렌드": {
+    linkedin: `📊 2024년 원격근무 트렌드, 숫자로 읽는다.
+
+가트너 최신 보고서에 따르면 2024년 말까지 글로벌 기업의 74%가 하이브리드 워크를 영구 정책으로 채택할 전망입니다.
+
+이게 IT 팀에 무엇을 의미할까요?
+
+📌 시사점 3가지:
+
+1️⃣ 원격 IT 지원의 표준화가 필수
+   사무실 밖 직원의 PC 장애를 어떻게 처리할 것인가
+   → 원격지원 솔루션 없이는 답이 없습니다
+
+2️⃣ 보안 리스크가 2배로 증가
+   집과 카페, 공용 네트워크에서 접속하는 직원들
+   → 엔드포인트 보안 + 접근 제어가 핵심
+
+3️⃣ IT 비용 최적화 압박 심화
+   현장 출장 vs 원격 처리의 비용 차이는 평균 20배
+   → ROI 기반 IT 투자 결정이 중요해짐
+
+알서포트가 1,200개 이상의 기업·기관을 분석한 결과, 원격지원 솔루션을 도입한 곳의 평균 IT 운영 비용이 37% 감소했습니다.
+
+트렌드를 아는 것에서 끝나지 않고, 실제로 준비가 된 조직이 되어야 합니다.
+
+여러분의 조직은 하이브리드 시대에 얼마나 준비되어 있나요? 🤔
+
+#하이브리드워크 #원격근무 #IT트렌드 #디지털전환 #알서포트 #기업IT`,
+
+    blog: `# 2024 하이브리드 워크 시대, IT 팀이 반드시 알아야 할 원격지원 트렌드
+
+## 숫자로 보는 현실
+
+2024년 현재, 우리가 일하는 방식은 돌이킬 수 없이 바뀌었습니다. 가트너의 최신 조사에 따르면 글로벌 기업의 74%가 하이브리드 워크를 영구 정책으로 채택했으며, 국내에서도 대기업의 68%, 중견기업의 51%가 유연 근무제를 운영 중입니다.
+
+이 변화는 단순히 "어디서 일하냐"의 문제가 아닙니다. IT 인프라와 지원 체계 전반을 재설계해야 하는 구조적 변화입니다.
+
+## 하이브리드 워크가 IT 팀에 던지는 3가지 과제
+
+### 1. 원격 환경의 IT 지원 표준화
+
+가장 빈번하게 발생하는 문제는 "집에 있는 직원의 PC가 갑자기 안 됩니다"입니다. 기존처럼 담당자가 직접 찾아가거나, 직원이 노트북을 들고 회사를 방문하는 방식은 하이브리드 시대에 맞지 않습니다.
+
+원격지원 솔루션을 통해 어디서든 즉시 접속하여 문제를 해결하는 프로세스의 표준화가 필수입니다.
+
+### 2. 보안 위협의 다변화
+
+사내 네트워크를 벗어난 직원들은 자연스럽게 더 많은 보안 위협에 노출됩니다. 가정용 공유기, 카페 공용 와이파이, 심지어 해외 출장지 네트워크까지—각기 다른 보안 수준의 환경에서 회사 데이터에 접근합니다.
+
+CC인증과 256비트 암호화를 갖춘 원격지원 솔루션의 선택이 중요한 이유입니다.
+
+### 3. IT 비용의 구조적 최적화
+
+알서포트가 1,200개 이상 도입 사례를 분석한 결과, 원격지원 솔루션 도입 후 평균 IT 운영 비용이 37% 절감되었습니다. 출장비, 이동 시간, 장애 처리 지연으로 인한 생산성 손실을 모두 포함한 수치입니다.
+
+## 2024년 원격지원 시장의 주요 변화
+
+올해 주목할 만한 트렌드는 AI 기반 자동 진단 기능의 확산입니다. 원격 접속 전 AI가 먼저 문제를 분석하고 해결 방안을 제시하는 기능이 상용화되고 있으며, 알서포트 역시 이 기능을 차기 버전에 탑재할 예정입니다.
+
+## 지금 시작해야 하는 이유
+
+트렌드는 이미 방향을 정했습니다. 하이브리드 워크는 선택이 아니라 표준이 되었고, 이에 맞는 IT 지원 체계를 갖추지 못한 조직은 경쟁에서 뒤처질 수밖에 없습니다.
+
+알서포트와 함께 하이브리드 시대에 맞는 IT 인프라를 구축하세요.
+
+---
+*더 자세한 내용은 알서포트 공식 블로그(blog.rsupport.com)에서 확인하세요*`
+  },
+
+  "제품 기능": {
+    linkedin: `🔐 원격지원에서 보안은 선택이 아닌 필수입니다.
+
+많은 기업들이 원격지원 솔루션을 도입할 때 편의성만 보고 결정합니다.
+그런데 6개월 후, 보안 감사에서 문제가 터집니다.
+
+알서포트 RemoteView가 보안을 대하는 방식:
+
+🛡️ 국내 유일 CC인증 보유 (EAL3+)
+🔒 AES 256비트 종단간 암호화
+👤 2단계 인증 + IP 접근 제어
+📝 전체 세션 녹화 및 감사 로그
+🏢 온프레미스/클라우드 선택 배포
+
+"보안 때문에 원격지원 못 쓴다"는 말은 이제 옛말입니다.
+
+공공기관, 금융사, 의료기관까지 — 보안이 가장 엄격한 곳에서도 RemoteView를 선택하는 이유가 있습니다.
+
+여러분의 회사 원격지원 솔루션, 마지막으로 보안 점검해보신 게 언제인가요? 🔍
+
+#정보보안 #원격지원보안 #RemoteView #알서포트 #CC인증 #기업보안`,
+
+    blog: `# RemoteView 보안 기능 완전 해부: 공공기관도 믿고 쓰는 이유
+
+## "원격지원 = 보안 구멍"이라는 오해
+
+IT 보안 담당자들이 원격지원 솔루션 도입을 꺼리는 가장 큰 이유는 보안에 대한 우려입니다. "외부에서 내부 PC에 접속한다"는 개념 자체가 보안 위협처럼 느껴지기 때문입니다.
+
+그러나 현실은 반대입니다. 제대로 된 원격지원 솔루션은 오히려 보안 수준을 높입니다.
+
+## RemoteView의 7가지 핵심 보안 기능
+
+### 1. CC인증 (EAL3+) — 국내 원격지원 솔루션 중 유일
+
+국가정보원이 인증하는 CC인증은 IT 보안 제품의 최고 공인 인증입니다. RemoteView는 원격지원 솔루션 중 국내 유일하게 EAL3+ 등급을 획득했습니다.
+
+### 2. AES 256비트 종단간 암호화
+
+모든 세션 데이터는 AES 256비트로 암호화됩니다. 중간에 패킷을 가로채더라도 해독이 사실상 불가능한 수준입니다.
+
+### 3. 다단계 인증 (MFA)
+
+접속 시 ID/PW 외에 OTP, 이메일 인증, 생체 인증 등 추가 인증을 요구할 수 있습니다.
+
+### 4. IP 및 MAC 주소 접근 제어
+
+허용된 IP 대역과 기기에서만 접속을 허용합니다. 승인되지 않은 기기는 자동 차단됩니다.
+
+### 5. 전체 세션 녹화 및 감사 로그
+
+모든 원격 세션이 자동 녹화되며, 누가 언제 어떤 PC에 접속해 무엇을 했는지 완전한 감사 추적이 가능합니다.
+
+### 6. 접속 시 사용자 동의 요청
+
+원격 접속 전 반드시 사용자 승인을 받아야 합니다. 무단 접속이 구조적으로 불가능합니다.
+
+### 7. 온프레미스 구축 옵션
+
+데이터가 외부 서버를 거치는 것이 불안한 조직을 위해 자체 서버에 완전 구축하는 온프레미스 방식을 지원합니다.
+
+## 실제 도입 사례: 금융기관의 선택
+
+국내 주요 금융기관 B사는 보안 감사에서 기존 원격지원 솔루션의 취약점이 발견된 후 RemoteView로 전환했습니다. 전환 후 6개월간 보안 인시던트 제로를 기록했으며, 금융감독원 정기 감사에서도 원격지원 부문 최고 등급을 받았습니다.
+
+## 결론: 보안과 편의성, 둘 다 잡을 수 있습니다
+
+더 이상 "보안이냐 편의성이냐"를 선택할 필요가 없습니다. RemoteView는 두 가지를 동시에 제공합니다.
+
+30일 무료 체험으로 직접 확인해 보세요.
+
+---
+*문의: security@rsupport.com | 보안 컨설팅 무료 제공*`
+  },
+
+  "이벤트 홍보": {
+    linkedin: `🎪 알서포트 원격지원 세미나 — 무료 참가 신청 받습니다!
+
+📅 일시: 2024년 4월 15일 (화) 오후 2시~5시
+📍 장소: 서울 강남 코엑스 컨퍼런스룸 317호
+💻 온라인 병행 진행 (Zoom)
+
+이런 분들을 위한 세미나입니다:
+✔ IT 인프라 효율화를 고민하는 IT 관리자
+✔ 원격근무 환경 개선을 준비 중인 경영진
+✔ 원격지원 솔루션 도입을 검토 중인 담당자
+
+📌 주요 세션:
+1부 | 2024 원격지원 트렌드와 기업 IT 전략
+2부 | RemoteView 신기능 라이브 데모
+3부 | 실제 도입 기업 담당자 패널 토크
+
+🎁 참가 특전:
+- 6개월 무료 이용권 추첨 (10명)
+- 알서포트 IT 가이드북 증정
+- 1:1 맞춤 컨설팅 신청 가능
+
+선착순 100명 마감! 링크에서 지금 바로 신청하세요 👇
+
+#IT세미나 #원격지원 #알서포트 #무료세미나 #디지털전환 #IT담당자`,
+
+    blog: `# [참가 신청] 알서포트 원격지원 혁신 세미나 2024 — 무료 등록 안내
+
+## 세미나 개요
+
+알서포트가 2024년 첫 번째 오프라인 세미나를 개최합니다. 하이브리드 근무 환경에서 IT 부서가 직면한 현실적인 과제들을 함께 풀어가는 자리를 마련했습니다.
+
+**행사명**: 원격지원 혁신 세미나 2024 — 하이브리드 시대의 IT 전략
+**일시**: 2024년 4월 15일 (화) 오후 2:00 ~ 5:30
+**장소**: 서울 강남구 코엑스 컨퍼런스룸 317호 + 온라인 Zoom 병행
+**참가비**: 무료 (사전 등록 필수)
+**정원**: 현장 100명 / 온라인 500명
+
+## 이런 분들께 추천합니다
+
+IT 인프라의 효율화와 비용 절감을 고민하는 IT 관리자, 재택·하이브리드 근무 환경 개선을 검토 중인 경영진, 원격지원·화상회의 솔루션 도입을 준비 중인 구매 담당자, 그리고 최신 IT 트렌드를 파악하고 싶은 모든 IT 종사자분들을 환영합니다.
+
+## 세션 구성
+
+**1부 (14:00~14:50) | 2024 원격지원 트렌드와 기업 IT 전략**
+가트너, IDC 최신 리포트를 바탕으로 하이브리드 워크 시대의 IT 인프라 전략을 분석합니다. 알서포트 수석 컨설턴트가 직접 발표합니다.
+
+**2부 (15:00~15:50) | RemoteView 2024 신기능 라이브 데모**
+올해 새롭게 출시된 AI 자동 진단, 대규모 동시 접속, 강화된 보안 기능을 실시간 시연으로 확인하세요.
+
+**3부 (16:00~17:00) | 실제 도입 기업 담당자 패널 토크**
+공공기관, 금융사, 제조업 IT 담당자 3인이 솔직한 도입 경험과 성과를 공유합니다. Q&A 포함.
+
+## 참가 특전
+
+현장 참석자 전원에게 알서포트 IT 가이드북을 증정하며, 추첨을 통해 10명에게 RemoteView 6개월 무료 이용권을 드립니다. 세미나 후 1:1 맞춤 컨설팅 신청도 가능합니다.
+
+## 신청 방법
+
+아래 링크에서 간단한 정보 입력 후 즉시 참가 확정됩니다. 선착순 마감이므로 서둘러 신청해 주세요.
+
+👉 신청 링크: event.rsupport.com/seminar2024
+
+문의: event@rsupport.com / 02-1234-5678
+
+---
+*알서포트는 국내 1위 원격지원 솔루션 기업으로, 1,200개 이상의 기업·기관에 서비스를 제공하고 있습니다.*`
+  },
+
+  "뉴스 코멘트": {
+    linkedin: `📰 "재택근무 직원 60%, IT 문제로 생산성 손실 경험" — 이 통계, 우리 회사 얘기 아닌가요?
+
+최근 발표된 IDC 보고서의 내용입니다.
+
+재택·하이브리드 근무자의 60%가 한 달에 한 번 이상 IT 문제로 업무가 중단되고, 평균 복구까지 2.8시간이 걸린다고 합니다.
+
+이 숫자가 말해주는 것:
+→ 직원 100명 기업 기준, 월 168시간의 생산성 손실
+→ 시간당 임금 3만 원으로 계산하면 월 504만 원 낭비
+→ 연간으로 6,000만 원 이상의 보이지 않는 비용
+
+그런데 많은 기업들이 이걸 '어쩔 수 없는 비용'으로 치부합니다.
+
+알서포트를 도입한 기업들의 평균 IT 장애 처리 시간은 23분입니다.
+2.8시간이 23분으로 줄어든다는 건, 단순 편의의 문제가 아닙니다.
+
+IT 인프라는 비용이 아니라 투자입니다.
+ROI로 설득하세요.
+
+이 데이터, 경영진 보고 자료에 활용해 보세요 💡
+
+#IT생산성 #원격근무 #하이브리드워크 #알서포트 #디지털전환 #ITRO`,
+
+    blog: `# IDC 보고서로 본 재택근무 IT 생산성 문제 — 그리고 해결책
+
+## 충격적인 통계 하나
+
+IDC가 최근 발표한 '2024 하이브리드 워크 IT 현황 보고서'에서 눈길을 끄는 통계가 있습니다. 재택·하이브리드 근무자의 **60%가 한 달에 한 번 이상 IT 문제로 업무가 중단**된다는 것입니다.
+
+더 놀라운 건 평균 복구 시간입니다. 원격 환경에서 IT 장애가 발생했을 때 해결까지 **평균 2.8시간**이 소요됩니다. 사무실이었다면 IT 담당자가 5분 만에 해결할 문제를요.
+
+## 숫자로 계산해보는 숨겨진 비용
+
+이 통계를 실제 비용으로 환산해봤습니다.
+
+직원 100명 규모의 기업을 가정했을 때:
+- 월 IT 장애 발생 인원: 60명
+- 인당 평균 손실 시간: 2.8시간
+- 월 총 생산성 손실: **168시간**
+- 시간당 평균 인건비 3만 원 기준: **월 504만 원**
+- 연간 환산: **약 6,048만 원**
+
+직원이 1,000명이라면 연간 6억 원 규모의 보이지 않는 손실입니다.
+
+## 왜 이 문제가 계속 방치될까?
+
+재미있는 건, 많은 기업들이 이 비용을 '측정하지 않는다'는 점입니다. IT 장애로 인한 생산성 손실은 급여 명세서에 찍히지 않습니다. 출장비처럼 영수증이 남지도 않습니다. 그래서 '어쩔 수 없는 것'으로 인식됩니다.
+
+하지만 이건 명백히 해결 가능한 문제입니다.
+
+## 알서포트의 접근: 처리 시간 2.8시간 → 23분
+
+알서포트 RemoteView를 도입한 기업들의 평균 IT 장애 처리 시간은 **23분**입니다.
+
+같은 공식으로 계산하면:
+- 월 총 생산성 손실: 168시간 → **23시간**
+- 월 비용: 504만 원 → **69만 원**
+- **월 435만 원, 연 5,200만 원 절감**
+
+RemoteView의 연간 이용료보다 절감 금액이 훨씬 큰 경우가 대부분입니다.
+
+## 경영진을 설득하는 법
+
+IT 투자를 요청할 때 "편리해진다"는 논리는 약합니다. ROI 수치로 말하세요.
+
+"직원 100명 기준, 연간 5,200만 원의 생산성 손실을 막을 수 있습니다. RemoteView 도입 비용 대비 ROI는 약 800%입니다."
+
+이런 언어가 경영진의 결재를 이끌어냅니다.
+
+---
+*참고: IDC 'Hybrid Work IT Productivity Report 2024' / 알서포트 1,200개 도입 사례 분석*`
+  }
+};
+
+// ── 칩 그룹 초기화 ─────────────────────────────
+function initChipGroup(groupId) {
+  document.getElementById(groupId).querySelectorAll('.chip').forEach(chip => {
+    chip.addEventListener('click', () => {
+      document.getElementById(groupId).querySelectorAll('.chip').forEach(c => c.classList.remove('active'));
+      chip.classList.add('active');
+    });
+  });
+}
+['typeGroup','toneGroup','channelGroup','targetGroup'].forEach(initChipGroup);
+
+function getActive(groupId) {
+  const el = document.querySelector(`#${groupId} .chip.active`);
+  return el ? el.dataset.val : '';
+}
+function updateCharCount(el, id) {
+  document.getElementById(id).textContent = `${el.value.length} / ${el.maxLength}`;
+}
+
+// ── 이력 ──────────────────────────────────────
+const historyItems = [];
+function addHistory(kw, type, channel) {
+  const now = new Date();
+  const t = now.getHours().toString().padStart(2,'0') + ':' + now.getMinutes().toString().padStart(2,'0');
+  historyItems.unshift({ kw, type, channel, t });
+  if (historyItems.length > 5) historyItems.pop();
+  const el = document.getElementById('historyList');
+  el.innerHTML = historyItems.map(h => `
+    <div class="history-item">
+      <div>
+        <div class="history-kw">${h.kw || '(키워드 없음)'}</div>
+        <div class="history-meta">${h.type} · ${h.channel==='linkedin'?'LinkedIn':h.channel==='blog'?'블로그':'둘 다'}</div>
+      </div>
+      <div class="history-time">${h.t}</div>
+    </div>`).join('');
+}
+
+// ── 탭 전환 ───────────────────────────────────
+function switchTab(id) {
+  document.querySelectorAll('.result-tab').forEach(t => t.classList.remove('active'));
+  document.querySelectorAll('.result-content').forEach(c => c.classList.remove('active'));
+  document.querySelector(`.result-tab[data-tab="${id}"]`)?.classList.add('active');
+  document.getElementById(`tab-${id}`)?.classList.add('active');
+}
+
+// ── 복사 ──────────────────────────────────────
+function copyText(btn, text) {
+  navigator.clipboard.writeText(text).then(() => {
+    btn.textContent = '✓ 복사됨';
+    btn.classList.add('copied');
+    setTimeout(() => { btn.textContent = '복사'; btn.classList.remove('copied'); }, 2000);
+  });
+}
+
+// ── 결과 렌더 ─────────────────────────────────
+function renderResults(results) {
+  const tabs = document.getElementById('resultTabs');
+  const contents = document.getElementById('resultContents');
+  tabs.innerHTML = ''; contents.innerHTML = '';
+
+  results.forEach((r, i) => {
+    const tab = document.createElement('div');
+    tab.className = 'result-tab' + (i===0?' active':'');
+    tab.dataset.tab = r.id;
+    tab.innerHTML = `${r.icon} ${r.label}`;
+    tab.onclick = () => switchTab(r.id);
+    tabs.appendChild(tab);
+
+    const c = document.createElement('div');
+    c.className = 'result-content fade-in' + (i===0?' active':'');
+    c.id = `tab-${r.id}`;
+    const safeText = r.text.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+    const copyText_ = r.text.replace(/`/g,'\\`').replace(/\\/g,'\\\\').replace(/'/g,"\\'");
+    c.innerHTML = `
+      <div class="meta-row">
+        ${r.chips.map(ch=>`<span class="meta-chip">${ch}</span>`).join('')}
+      </div>
+      <div class="result-card">
+        <div class="result-card-header">
+          <div class="result-card-title">${r.icon} <span>${r.label}</span> <span class="${r.badgeCls}">${r.badgeTxt}</span></div>
+          <button class="copy-btn" onclick="copyText(this, \`${copyText_}\`)">복사</button>
+        </div>
+        <div class="result-body">${safeText}</div>
+      </div>
+      <div class="result-footer">글자 수: ${r.text.length}자 &nbsp;·&nbsp; Claude AI 생성 (데모)</div>`;
+    contents.appendChild(c);
+  });
+}
+
+// ── 메인 생성 함수 ─────────────────────────────
+function generateContent() {
+  const keyword = document.getElementById('keyword').value.trim();
+  const type    = getActive('typeGroup');
+  const channel = getActive('channelGroup');
+  const tone    = getActive('toneGroup');
+  const target  = getActive('targetGroup');
+
+  if (!keyword) {
+    const kw = document.getElementById('keyword');
+    kw.classList.add('error');
+    kw.placeholder = '키워드를 입력해 주세요!';
+    kw.focus();
+    setTimeout(() => { kw.classList.remove('error'); kw.placeholder = '예: 원격지원, 화상회의, 보안'; }, 2500);
+    return;
+  }
+
+  const btn = document.getElementById('genBtn');
+  btn.disabled = true;
+  btn.innerHTML = '<div class="spinner"></div><span>생성 중...</span>';
+
+  document.getElementById('emptyState').style.display = 'none';
+  document.getElementById('resultState').style.display = 'none';
+  document.getElementById('loadingState').style.display = 'block';
+
+  const msgs = [
+    'Claude AI가 콘텐츠를 구성하는 중...',
+    '브랜드 톤에 맞게 문장을 다듬는 중...',
+    '해시태그와 구조를 최적화하는 중...',
+    '마무리 검토 중...'
+  ];
+  let mi = 0;
+  const timer = setInterval(() => {
+    document.getElementById('loadingMsg').textContent = msgs[Math.min(++mi, msgs.length-1)];
+  }, 700);
+
+  // 데모: 1.8초 후 예시 데이터 출력
+  setTimeout(() => {
+    clearInterval(timer);
+    document.getElementById('loadingState').style.display = 'none';
+    document.getElementById('resultState').style.display = 'block';
+
+    const pool = DEMO_CONTENT[type] || DEMO_CONTENT['고객 사례'];
+    const results = [];
+
+    if (channel === 'linkedin' || channel === 'both') {
+      results.push({
+        id: 'linkedin', label: 'LinkedIn 포스트', icon: '💼',
+        badgeCls: 'linkedin-badge', badgeTxt: 'LinkedIn',
+        chips: [type, tone+' 톤', target, `키워드: ${keyword}`],
+        text: pool.linkedin
+      });
+    }
+    if (channel === 'blog' || channel === 'both') {
+      results.push({
+        id: 'blog', label: '블로그 포스트', icon: '✍️',
+        badgeCls: 'blog-badge', badgeTxt: 'Blog',
+        chips: [type, tone+' 톤', target, `키워드: ${keyword}`],
+        text: pool.blog
+      });
+    }
+
+    renderResults(results);
+    addHistory(keyword, type, channel);
+
+    btn.disabled = false;
+    btn.innerHTML = '<span>✨</span><span>다시 생성</span>';
+  }, 1800);
+}
+</script>
+</body>
+</html>
